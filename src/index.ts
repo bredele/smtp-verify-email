@@ -1,13 +1,9 @@
 import { Socket } from "node:net";
 import { CONFIG, SMTP_CODES } from "./constants";
 
-
-const createCommand = {
-  helo: (hostname: string) => `EHLO ${hostname}\r\n`,
-  mailFrom: (email: string) => `MAIL FROM:<${email}>\r\n`,
-  rcptTo: (email: string) => `RCPT TO:<${email}>\r\n`,
-  quit: () => "QUIT\r\n",
-};
+/**
+ * Verify email deliverability using raw SMTP handshake and MX lookup.
+ */
 
 export default async (mailServer: string, email: string): Promise<boolean> => {
   return new Promise((resolve, reject) => {
@@ -58,24 +54,24 @@ export default async (mailServer: string, email: string): Promise<boolean> => {
         case 0: // Wait for server greeting (220)
           handleResponse(SMTP_CODES.SERVICE_READY, () => {
             currentStep = 1;
-            socket.write(createCommand.helo(CONFIG.HOSTNAME));
+            socket.write(`EHLO ${CONFIG.HOSTNAME}\r\n`);
           });
           break;
         case 1: // Wait for HELO response (250)
           handleResponse(SMTP_CODES.OK, () => {
             currentStep = 2;
-            socket.write(createCommand.mailFrom(CONFIG.FROM_EMAIL));
+            socket.write(`MAIL FROM:<${CONFIG.FROM_EMAIL}>\r\n`);
           });
           break;
         case 2: // Wait for MAIL FROM response (250)
           handleResponse(SMTP_CODES.OK, () => {
             currentStep = 3;
-            socket.write(createCommand.rcptTo(email));
+            socket.write(`RCPT TO:<${email}>\r\n`);
           });
           break;
         case 3: // Wait for RCPT TO response (250) - this verifies the email
           handleResponse(SMTP_CODES.OK, () => {
-            socket.write(createCommand.quit());
+            socket.write(`QUIT\r\n`);
             cleanup();
             resolve(true);
           });
