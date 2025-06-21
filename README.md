@@ -5,7 +5,7 @@ Verify email deliverability using raw SMTP handshake and MX lookup.
 ## Installation
 
 ```sh
-$ npm install @bredele/smtp-verify-email
+npm install @bredele/smtp-verify-email
 ```
 
 ## Usage
